@@ -1,28 +1,28 @@
 import requests
 from bs4 import BeautifulSoup
-import os,sys,time,logging,re
+import os, sys, time, logging, re
 from pymongo import MongoClient
 from multiprocessing import Pool
 from multiprocessing.dummy import Pool as ThreadPool
 from multiprocessing.dummy import Lock
-import glob,shutil,datetime
-from tqdm import tqdm,trange
+import glob, shutil, datetime
+from tqdm import tqdm, trange
 import configparser
 
 class NAPGetter:    
-    max_thread=100
-    max_retry=5
-    time_sleep=2
-    save_loc=''
-    pbar1=None
-    pbar3=None
-    def __init__(self, save_loc,max_thread=100, max_retry=5, time_sleep=2):
-        self.max_thread=max_thread
-        self.max_retry=max_retry
-        self.time_sleep=time_sleep
-        self.save_loc=save_loc
-        pbar1=None
-        pbar3=None
+    max_thread = 100
+    max_retry = 5
+    time_sleep = 2
+    save_loc = ''
+    pbar1 = None
+    pbar3 = None
+    def __init__(self, _save_loc,_max_thread=100, _max_retry=5, _time_sleep=2):
+        self.max_thread = _max_thread
+        self.max_retry = _max_retry
+        self.time_sleep = _time_sleep
+        self.save_loc = _save_loc
+        self.pbar1 = None
+        self.pbar3 = None
     
 
     #
@@ -73,8 +73,6 @@ class NAPGetter:
                                     href="https://www.net-a-porter.com"+link["href"])
                         logging.debug("成功获取第%d个品牌%s,HREF=%s",brand["BrandID"],brand["BrandName"],brand["href"])
                         brands.append(brand)
-
-                logging.debug("Leaving module: %s",sys._getframe().f_code.co_name)
                 return brands
 
         except:
@@ -88,7 +86,6 @@ class NAPGetter:
     #return: 产品列表
     #
     def getProducts(self,brand,reTry=0):
-        logging.debug("Enter module: %s",sys._getframe().f_code.co_name)
         headers={
             'Connection': 'keep-alive',
             'Cache-Control': 'max-age=0',
@@ -124,7 +121,7 @@ class NAPGetter:
                 time.sleep(self.time_sleep)
                 return self.getProducts(brand,reTry+1)
             else:
-                logging.error("达到最大重试次数 %d，不再重新获取.产品编码:%s,产品链接：%s",reTry,product["saveLoc"],url)
+                logging.error("达到最大重试次数，不再重新获取.产品编码:%s,产品链接：%s",brand["BrandName"],brand["href"])
                 return None
 
     #
