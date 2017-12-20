@@ -24,7 +24,7 @@ def getbrands(ntry=1):
     url = "http://www.fwrd.com/designers/?navsrc=main"
 
     try:
-        res = requests.get(url,timeout=TIME_OUT)
+        res = requests.get(url, timeout=TIME_OUT)
         soup = BeautifulSoup(res.text, "html.parser")
         links = soup.select(".designers_list__col li a")
         brands = []
@@ -50,7 +50,7 @@ def getproducts(brand, ntry=1):
     url = brand["site"] + brand["href"]
 
     try:
-        res = requests.get(url,timeout=TIME_OUT)
+        res = requests.get(url, timeout=TIME_OUT)
         soup = BeautifulSoup(res.text, "html.parser")
         links = soup.select(".product.grid__col.u-center")
 
@@ -98,7 +98,7 @@ def getimagelist(product, ntry=1):
     url = product["product_href"]
 
     try:
-        res = requests.get(url,timeout=TIME_OUT)
+        res = requests.get(url, timeout=TIME_OUT)
         soup = BeautifulSoup(res.text, "html.parser")
         links = soup.select(".product_zoom .cycle-slideshow img")
 
@@ -130,13 +130,13 @@ def retrieveimg(product, ntry=1):
             img_loc = product["save_loc"] + "\\"+ img["brand_name"]
             os.makedirs(img_loc, exist_ok=True)
             filename = re.match(re.compile(r".*/(.*?)$", re.IGNORECASE), img["img_href"]).group(1)
-            res = requests.get(img["img_href"],timeout=TIME_OUT)
+            res = requests.get(img["img_href"], timeout=TIME_OUT)
             file = open(img_loc + "\\" + filename, "wb")
             file.write(res.content)
             file.close()
 
         #所有图片获取成功，追加写入到文件日志,更新进度条
-        logging.debug("产品%s 图片获取成功。",product["product_href"])
+        logging.debug("产品%s 图片获取成功。", product["product_href"])
 
         #更新进度条，保存已存的文件记录
         lock.acquire()
@@ -177,13 +177,13 @@ def gen_img_list():
     """
     SAVE_LOC = "D:\\FWRD_COM"
 
-    MAX_THREAD=300
+    MAX_THREAD = 300
     brands = getbrands()
     print("查询到共有", len(brands), "品牌！")
 
     #启动多线程获取所有各个品牌下的产品集合
     global pbrand
-    pbrand = tqdm(total=len(brands),ncols =0,desc="获取各品牌产品目录进展：")
+    pbrand = tqdm(total=len(brands), ncols=0, desc="获取各品牌产品目录进展：")
     pool_products = Pool(processes=min(len(brands), MAX_THREAD))
     res = pool_products.map(getproducts, brands)
     pbrand.close()
@@ -208,7 +208,7 @@ def gen_img_list():
 
     #启动多线程获取获取并保存产品图片
     global pbar
-    pbar = tqdm(total=len(new_products),ncols =0,desc="获取产品图片进展：")
+    pbar = tqdm(total=len(new_products), ncols=0, desc="获取产品图片进展：")
     pool_saveimg = Pool(processes=min(len(new_products), MAX_THREAD))
     res = pool_saveimg.map(retrieveimg, new_products)
     pbar.close()
@@ -217,7 +217,7 @@ def get_saved_products(save_loc):
     """
     读取文件，获取已经保存的产品列表
     """
-    file = open(save_loc + "\\saved_products.rec","r")
+    file = open(save_loc + "\\saved_products.rec", "r")
     rec = []
     while 1:
         line = file.readline()
@@ -231,9 +231,8 @@ if __name__ == "__main__":
     SITE = "http://www.fwrd.com"
 
      #设置日志级别
-    format='%(asctime)s %(levelname)s:  %(message)s'
-    logging.basicConfig(filename="fw.log",level=logging.INFO,format=format)
+    log_format = '%(asctime)s %(levelname)s:  %(message)s'
+    logging.basicConfig(filename="fw.log", level=logging.INFO, format=log_format)
 
     lock = Lock()
     gen_img_list()
-
