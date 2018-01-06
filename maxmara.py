@@ -1,3 +1,6 @@
+# coding: UTF-8
+
+
 """
 从网站获取图片
 """
@@ -8,6 +11,7 @@ import glob
 import sys
 import os
 import re
+from platform import system
 import time
 import logging
 from urllib.parse import urlencode
@@ -155,7 +159,7 @@ def parser_products_by_page(category_page, retry=0):
             item = dict(
                 cate_type=category_page['cate_type'],
                 cate_name=category_page['cate_name'],
-                save_loc='d://maxmara_img',
+                save_loc='',
                 product_href=urlsplit(url)[0] + "://" + urlsplit(url)[1] + product['url'])
             #print(item)
             products.append(item)
@@ -175,9 +179,10 @@ def retrieve_img(product,retry=0):
     url = 'https://cn.maxmara.com/p-9226077906001-arturo-beige/ajax?_=1514646365123'
     url = product['product_href'] + '/ajax?'
 
-
-    # img_loc = product["save_loc"] + "\\"+ img["brand_name"]
-    os.makedirs(product['save_loc'], exist_ok=True)
+    try:
+        os.makedirs(product['save_loc'])
+    except FileExistsError:
+        pass
 
 
     try:
@@ -199,7 +204,7 @@ def retrieve_img(product,retry=0):
                 #print(image['url'])
                 filename = re.match(re.compile(r".*/(.*?)$", re.IGNORECASE), image['url']).group(1)
                 res = requests.get(image['url'], timeout=TIME_OUT)
-                file = open(product['save_loc'] + "\\" + filename, "wb")
+                file = open(product['save_loc'] + "/" + filename, "wb")
                 file.write(res.content)
                 file.close()
                 #print(filename, "saved successfully")
@@ -224,8 +229,12 @@ def main():
     主程序
     """
     MAX_THREAD = 300
-    SAVE_LOC = 'd://maxmara_img'
     MULTI_THREAD = True
+    SAVE_LOC = dict(
+        Linux=os.getcwd() + '/' + 'maxmara_img',
+        Windows='d:/maxmara_img',
+        Darwin=os.getcwd() + '/' + 'maxmara_img')[system()]
+
 
     #设置日志级别
     log_format = '%(asctime)s %(levelname)s:  %(message)s'
@@ -285,6 +294,7 @@ def main():
 
 
     #获取产品图片,并更新进度跳
+    MULTI_THREAD = True
     limit = None
     if limit:
         num=min(limit,len(new_products))
@@ -306,19 +316,29 @@ def get_saved_products(save_loc):
     """
     读取文件，获取已经保存的产品列表
     """
-    file = open(save_loc + "\\saved_products.rec", "r")
+        
     rec = []
-    while 1:
-        line = file.readline()
-        if not line:
-            break
-        rec.append(line.strip('\n'))
+    try:
+        file = open(save_loc + "/saved_products.rec", "r")
+        while 1:
+            line = file.readline()
+            if not line:
+                break
+            rec.append(line.strip('\n'))
+        file.close()
+
+    except IOError:
+        pass
     return rec
 
 def write_saved_products(save_loc, url):
-    file = open(save_loc + "\\saved_products.rec", "a")
-    file.writelines(url + "\n")
-    file.close()
+    """
+    写入记录
+    """
+
+    with open(save_loc + "/saved_products.rec", 'a') as f:
+        f.writelines(url + "\n")
+        f.close()
 
 
 def merge_res(res):
@@ -334,14 +354,7 @@ def get_host(url):
     """
     return urlsplit(url)[0] + "://" + urlsplit(url)[1]
 
-def run(bar):
-    for i in range(100):
-        bar.update(1)
-        time.sleep(1)
-def test():
-    pbar = tqdm(total=100, ncols=0, desc="progress:")
-    run(pbar)
-    pbar.close()
 
 if __name__ == "__main__":
     main()
+    # os.makedirs('/Users/victor/maxmara_img')
