@@ -8,6 +8,7 @@ import sys
 import os
 import re
 import time
+import shutil
 import logging
 from multiprocessing.dummy import Pool, Lock
 import requests
@@ -130,10 +131,19 @@ def retrieveimg(product, ntry=1):
             img_loc = product["save_loc"] + "\\"+ img["brand_name"]
             os.makedirs(img_loc, exist_ok=True)
             filename = re.match(re.compile(r".*/(.*?)$", re.IGNORECASE), img["img_href"]).group(1)
+            fileImg = img_loc + "\\" + filename
             res = requests.get(img["img_href"], timeout=TIME_OUT)
-            file = open(img_loc + "\\" + filename, "wb")
+            file = open(fileImg, "wb")
             file.write(res.content)
             file.close()
+
+            #拷贝文件到更新目录
+            destFoler= product['saveLoc'] + "\\@" + time.strftime("%Y%m%d", time.localtime())
+            destFile= destFoler  + "\\" + img["BrandName"] + "_" +filename
+            logging.debug("%s,%s,%s", destFoler, fileImg, destFile)
+            os.makedirs(destFoler,exist_ok=True)
+            shutil.copyfile(fileImg, destFile)
+
 
         #所有图片获取成功，追加写入到文件日志,更新进度条
         logging.debug("产品%s 图片获取成功。", product["product_href"])
